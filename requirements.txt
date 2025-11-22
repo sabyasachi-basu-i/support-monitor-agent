@@ -2,3 +2,9 @@ FastAPI
 mcp_use
 langchain_mcp_adapters
 langchain_groq
+pymongo
+motor
+aiohttp
+asyncio
+pandas
+openpyxl

@@ -4,14 +4,13 @@ import os
 from dotenv import load_dotenv  
 import pandas as pd
 import re
-from master_agent.agent.server.api.jobs import update_job
+# from master_agent.agent.server.api.jobs import update_job
 
 
 excel_path = r"C:\Users\vishesh\Downloads\RCA_Knowledge_Base.xlsx"
 
 
-
-def rca_analyizer(Process_Name: str, State: str, Exception_Message: str):
+async def rca_analyizer(Process_Name: str, State: str, Exception_Message: str):
     # Read the Excel file
     df = pd.read_excel(excel_path)
     
@@ -26,20 +25,21 @@ def rca_analyizer(Process_Name: str, State: str, Exception_Message: str):
         # Directly get the values from the first matching row
         row = filtered_df.iloc[0]  # pick the first match
         RCA_ID = row['RCA_ID']
+        Suggested_Action=row['Suggested_Action']
         Base_Confidence = row['Base_Confidence']
-        update_job(RCA_ID)
-
+        
+        result={'RCA_ID':RCA_ID, 'Suggested_Action':Suggested_Action,'Base_Confidence':Base_Confidence}
         # Add more columns here if needed
-        return {'RCA_ID':RCA_ID, 'Base_Confidence':Base_Confidence}
+        return result
     else:
         return None, None  # or raise an error if no match
 
 # Example usage
-rca_id, confidence = rca_analyizer(
-    "TDECU_Insurance_Disbursement", 
-    "Faulted", 
-    "DNA Application Login failed"
-)
+# rca_id, Suggested_Action,confidence  = rca_analyizer(
+#     "TDECU_Insurance_Disbursement", 
+#     "Faulted", 
+#     "DNA Application Login failed"
+# )
 
 
 # print("RCA_ID:", rca_id)

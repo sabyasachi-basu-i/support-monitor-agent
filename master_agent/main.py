@@ -1,23 +1,22 @@
 # main.py
 from fastapi import FastAPI
 from agent.client.client import setup_agent
-from agent.server.api.jobs import get_job_by_id, get_logs_by_execution_id, get_rca_by_id
-
+from agent.server.api.jobs import get_job_by_id, get_logs_by_execution_id,get_execution_by_executionid ,get_rca_by_id
+from agent.server.tools.rca import rca_analyizer
 app = FastAPI()
 
 @app.post("/v1/event")
 async def read_root(jobid: str):
-    job = get_job_by_id(jobid)
-    logs = get_logs_by_execution_id(job["execution_id"])
-    rca = get_rca_by_id(job["rca_id"])
-
+    job = await get_job_by_id(jobid)
+    logs = await get_logs_by_execution_id(job["ExecutionId"])
+    execution  =await get_execution_by_executionid(job["ExecutionId"])
+    print(execution)
     message = f"""
     JOB: {job}
     LOGS: {logs}
-    RCA: {rca}
     """
-
-    response = await setup_agent(message)
+    print(message)
+    response = await setup_agent(message,job["_id"])
     return response
 
 
@@ -31,3 +30,4 @@ if __name__ == "__main__":
         port=8000,
         reload=False
     )
+# uvicorn main:app --reload --port 8000
