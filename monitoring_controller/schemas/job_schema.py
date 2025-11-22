@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 class Job(BaseModel):
     ExecutionId: Optional[str] = None
     RCA_ID: Optional[str] = None
+    threadId: Optional[str] = None
     is_mailsent: bool = False
     mailsent_text: Optional[str] = None
     mailrecived_text: Optional[str] = None

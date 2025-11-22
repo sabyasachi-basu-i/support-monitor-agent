@@ -11,6 +11,7 @@ from schemas.auditlog_schema import AuditLog
 import asyncio
 from scheduler.execution_scheduler.ws_client import run_ws_client
 from scheduler.db_scheduler.monitor_faulted_executions import monitor_faulted_executions
+from scheduler.db_scheduler.monitor_email_replies import monitor_email_replies
 from scheduler.execution_scheduler.utils.apis import get_token,negotiate_connection
 
 app = FastAPI(title="Automation Logging Server")
@@ -30,6 +31,7 @@ async def start_ws_client():
     # Run websocket client as background task
     asyncio.create_task(run_ws_client(access_token, connection_token))
     asyncio.create_task(monitor_faulted_executions())
+    asyncio.create_task(monitor_email_replies())
 
 # -------------------------------
 # JOB APIs
