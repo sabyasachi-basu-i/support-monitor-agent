@@ -3,260 +3,389 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Monitor Dashboard</title>
-    <!-- Tailwind CSS from CDN -->
+    <title>Smart Governer Monitor</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Phosphor Icons for nice UI icons -->
+    <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
     <style>
-        /* Custom Scrollbar for the table container */
-        .custom-scroll::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f8fafc; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Fix column spacing */
+        table td, table th {
+            padding-left: 12px !important;
+            padding-right: 12px !important;
         }
-        .custom-scroll::-webkit-scrollbar-track {
-            background: #f1f1f1; 
-        }
-        .custom-scroll::-webkit-scrollbar-thumb {
-            background: #cbd5e1; 
-            border-radius: 4px;
-        }
-        .custom-scroll::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8; 
-        }
-        
-        /* Smooth fade in for rows */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.3s ease-out forwards;
-        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans h-screen flex flex-col overflow-hidden">
+
+<body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden">
 
     <!-- Header -->
-    <header class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm z-10">
-        <div class="flex items-center gap-3">
-            <div class="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+    <header class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm z-20">
+        <div class="flex items-center gap-4">
+            <div class="p-2.5 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl text-white shadow-md shadow-indigo-200">
                 <i class="ph ph-robot text-2xl"></i>
             </div>
             <div>
-                <h1 class="text-xl font-bold text-slate-800">Agent Live Monitor</h1>
-                <p class="text-xs text-slate-500">Real-time execution tracking</p>
+                <h1 class="text-xl font-bold text-slate-900 tracking-tight">Smart Governor Monitor</h1>
+                <p class="text-xs text-slate-500 font-medium">Real-time Process Execution & Audit Logs</p>
             </div>
         </div>
-        <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-medium border border-green-100">
-                <span class="relative flex h-2 w-2">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                </span>
-                Live Connection
+
+        <div class="flex items-center gap-5">
+            <div id="connectionBadge" class="flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-500 rounded-full text-xs font-semibold border border-slate-200 transition-all duration-300">
+                <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                Connecting...
             </div>
-            <span id="lastUpdated" class="text-xs text-slate-400 font-mono">Waiting for data...</span>
+            
+            <div class="flex flex-col items-end">
+                <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Last Sync</span>
+                <span id="lastUpdated" class="text-xs font-mono text-slate-600">--:--:--</span>
+            </div>
         </div>
     </header>
 
     <!-- Main Content -->
     <main class="flex-1 p-6 overflow-hidden flex flex-col">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
+        <div class="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-200 flex flex-col h-full overflow-hidden ring-1 ring-black/5">
             
-            <!-- Table Container -->
-            <div class="overflow-auto custom-scroll flex-1">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold sticky top-0 z-10 shadow-sm">
+            <div class="overflow-auto custom-scroll flex-1 relative">
+                <table class="w-full text-left border-collapse min-w-[1300px]">
+                    <thead class="bg-slate-50/80 backdrop-blur text-slate-500 text-xs uppercase font-bold tracking-wider sticky top-0 z-10 shadow-sm border-b border-slate-200">
                         <tr>
-                            <th class="px-4 py-3 border-b border-slate-200">Status</th>
-                            <th class="px-4 py-3 border-b border-slate-200">Execution Info</th>
-                            <th class="px-4 py-3 border-b border-slate-200">Threads & IDs</th>
-                            <th class="px-4 py-3 border-b border-slate-200 text-center">Mail Sent</th>
-                            <th class="px-4 py-3 border-b border-slate-200">Email (Sent)</th>
-                            <th class="px-4 py-3 border-b border-slate-200">Email (Received)</th>
-                            <th class="px-4 py-3 border-b border-slate-200">Timestamps</th>
+                            <th class="px-4 py-3 w-10 text-center">#</th>
+                            <th class="px-4 py-3 w-32">Status</th>
+                            <th class="px-4 py-3 w-40">Execution ID</th>
+                            <th class="px-4 py-3 w-64">Job Details</th>
+                            <th class="px-4 py-3 w-48">Mail Sent To</th>
+                            <th class="px-4 py-3 w-40">Acknowledgement</th>
+                            <th class="px-4 py-3 w-48">Timeline & Duration</th>
+                            <th class="px-4 py-3 text-right w-28">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="jobsTableBody" class="divide-y divide-slate-100 text-sm">
-                        <!-- Rows will be injected here -->
-                    </tbody>
+
+                    <tbody id="jobsTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
                 </table>
             </div>
-            
-            <!-- Footer / Legend -->
-            <div class="bg-slate-50 border-t border-slate-200 px-4 py-2 text-xs text-slate-500 flex gap-4">
-                <span><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1"></span> Completed</span>
-                <span><span class="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1"></span> Processing/Pending</span>
-                <span><span class="inline-block w-2 h-2 rounded-full bg-rose-500 mr-1"></span> Error/Failed</span>
-            </div>
+
         </div>
     </main>
 
-    <!-- Details Modal (Hidden by default) -->
-    <div id="detailModal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl m-4 flex flex-col max-h-[80vh]">
-            <div class="flex justify-between items-center p-4 border-b border-slate-100">
-                <h3 class="font-bold text-lg text-slate-800">Log Details</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition">
-                    <i class="ph ph-x text-xl"></i>
-                </button>
+<script>
+
+const expandedRows = new Set();
+const API_BASE = "http://localhost:8001";
+
+function updateConnectionStatus(isOnline) {
+    const badge = document.getElementById("connectionBadge");
+    if (isOnline) {
+        badge.className =
+            "flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-100 shadow-sm transition-all duration-300";
+        badge.innerHTML = `
+            <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            Live Connection
+        `;
+    } else {
+        badge.className =
+            "flex items-center gap-2 px-3 py-1.5 bg-rose-50 text-rose-700 rounded-full text-xs font-semibold border border-rose-100 shadow-sm transition-all duration-300";
+        badge.innerHTML = `
+            <i class="ph-bold ph-warning-circle text-rose-600"></i>
+            Connection Lost
+        `;
+    }
+}
+
+function formatDate(dateString) {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleString("en-US", {
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+    });
+}
+
+function calculateDuration(startStr, endStr) {
+    if (!startStr || !endStr) return "-";
+    const diff = new Date(endStr) - new Date(startStr);
+    if (diff < 0) return "0s";
+
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+
+    let d = [];
+    if (h > 0) d.push(`${h}h`);
+    if (m > 0) d.push(`${m}m`);
+    d.push(`${s}s`);
+    return d.join(" ");
+}
+
+function getStatusBadge(status) {
+    const s = (status || "").toLowerCase();
+    let style = "bg-slate-100 text-slate-600 border-slate-200";
+    let icon = "ph-minus";
+
+    if (s.includes("success") || s === "done") {
+        style = "bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-100";
+        icon = "ph-check-circle";
+    } else if (s.includes("fail") || s.includes("error")) {
+        style = "bg-rose-50 text-rose-700 border-rose-200 ring-1 ring-rose-100";
+        icon = "ph-warning-circle";
+    } else if (s.includes("running") || s.includes("pending")) {
+        style = "bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-100";
+        icon = "ph-spinner-gap animate-spin";
+    }
+
+    return `
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${style} shadow-sm">
+            <i class="ph-bold "></i> ${status || "Unknown"}
+        </span>`;
+
+    }
+
+function getAcknowledgementBadge(text, isMailSent) {
+
+    if (!isMailSent) return `<span class="text-xs text-slate-300">—</span>`;
+
+    if (isMailSent && (!text || text.trim() === "")) {
+        return `
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium">
+                <i class="ph-fill ph-clock"></i> Pending Response
+            </span>`;
+    }
+
+    const t = text.toLowerCase();
+
+    if (t.includes("approve")) {
+        return `
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-sm">
+                <i class="ph-fill ph-thumbs-up"></i> Approved
+            </span>`;
+    }
+
+    if (t.includes("reject")) {
+        return `
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold shadow-sm">
+                <i class="ph-fill ph-thumbs-down"></i> Rejected
+            </span>`;
+    }
+
+    return  `
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-green-50 text-green-700 border border-green-200 text-xs font-medium">
+                  Responded
+            </span>`;
+}
+
+function getMaskedEmail(text) {
+    const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/;
+    const match = text ? text.match(emailRegex) : null;
+    
+    let email = "admin@gmail.com"; 
+    if (match) email = match[0];
+
+    const [local, domain] = email.split('@');
+    const maskedLocal = local.length > 2 ? local.substring(0, 2) + '**' : local + '**';
+    
+    return `
+        <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
+                <i class="ph-fill ph-paper-plane-tilt"></i>
             </div>
-            <div class="p-4 overflow-auto bg-slate-50 custom-scroll">
-                <pre id="modalContent" class="text-xs font-mono text-slate-700 whitespace-pre-wrap break-words"></pre>
+            <div class="flex flex-col">
+                <span class="text-[10px] uppercase tracking-wide font-bold text-slate-400">Recipient</span>
+                <span class="text-xs font-mono text-slate-700 font-medium">${maskedLocal}@${domain}</span>
             </div>
-            <div class="p-4 border-t border-slate-100 text-right">
-                <button onclick="closeModal()" class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm hover:bg-slate-700 transition">Close</button>
-            </div>
-        </div>
-    </div>
+        </div>`;
+}
 
-    <script>
-        // --- Helper Functions ---
+async function fetchJobs() {
+    try {
+        const response = await fetch(`${API_BASE}/jobs`);
+        const jobs = await response.json();
 
-        // Format Dates nicely
-        function formatDate(dateString) {
-            if (!dateString) return '-';
-            const date = new Date(dateString);
-            return new Intl.DateTimeFormat('en-US', {
-                month: 'short', day: 'numeric',
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-            }).format(date);
-        }
-
-        // Get badge color based on status string
-        function getStatusBadge(status) {
-            const s = (status || '').toLowerCase();
-            let colorClass = "bg-slate-100 text-slate-600 border-slate-200"; // Default
-            let icon = "ph-minus";
-
-            if (s.includes('success') || s.includes('completed') || s === 'done') {
-                colorClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
-                icon = "ph-check-circle";
-            } else if (s.includes('fail') || s.includes('error')) {
-                colorClass = "bg-rose-50 text-rose-700 border-rose-200";
-                icon = "ph-warning-circle";
-            } else if (s.includes('running') || s.includes('pending') || s.includes('process')) {
-                colorClass = "bg-amber-50 text-amber-700 border-amber-200";
-                icon = "ph-spinner-gap animate-spin"; // Spinning icon
-            }
-
-            return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${colorClass}">
-                        <i class="ph ${icon}"></i> ${status || 'Unknown'}
-                    </span>`;
-        }
-
-        // Truncate text for the table view
-        function truncateText(text, maxLength = 30) {
-            if (!text) return '<span class="text-slate-300 italic">Empty</span>';
-            if (text.length <= maxLength) return text;
-            // Encode text for HTML attribute to prevent breaking quotes
-            const safeText = text.replace(/"/g, '&quot;');
-            return `
-                <span class="text-slate-600">${text}</span>
-                <!-- <span class="text-slate-600">${text.substring(0, maxLength)}...</span> -->
-                <!-- <button onclick='openModal("${encodeURIComponent(text)}")' class="ml-1 text-indigo-600 hover:text-indigo-800 text-xs font-medium hover:underline">
-                    View
-                </button> -->
-            `;
-        }
-
-        // --- Main Logic ---
-
-        async function fetchJobs() {
-            try {
-                const response = await fetch("http://localhost:8001/jobs");
-                const jobs = await response.json();
-                const tbody = document.getElementById("jobsTableBody");
-                
-                // Note: In a production app with React/Vue, we would diff the DOM. 
-                // Here we rebuild, but we keep it fast.
-                tbody.innerHTML = ""; 
-
-                // Update header time
-                const now = new Date();
-                document.getElementById("lastUpdated").innerText = `Last sync: ${now.toLocaleTimeString()}`;
-
-                if (jobs.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">No active jobs found.</td></tr>`;
-                    return;
+        const enriched = await Promise.all(
+            jobs.map(async job => {
+                if (job.ExecutionId) {
+                    try {
+                        const r = await fetch(`${API_BASE}/executions/${job.ExecutionId}`);
+                        if (r.ok) {
+                            const details = await r.json();
+                            return { ...job, Process: details.Process, Robot: details.Robot, EntryFile: details.EntryFile };
+                        }
+                    } catch {}
                 }
+                return { ...job, Process: null, Robot: null, EntryFile: null };
+            })
+        );
 
-                jobs.forEach((job, index) => {
-                    const row = document.createElement("tr");
-                    row.className = "hover:bg-slate-50 transition-colors border-b border-slate-50 animate-fade-in";
-                    // Add a slight delay to animation based on index for "waterfall" effect
-                    row.style.animationDelay = `${index * 0.05}ms`; 
+        renderTable(enriched);
+        updateConnectionStatus(true);
+        document.getElementById("lastUpdated").innerText = new Date().toLocaleTimeString();
 
-                    row.innerHTML = `
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            ${getStatusBadge(job.status)}
-                        </td>
-                        <td class="px-4 py-3">
-                             <div class="flex flex-col">
-                                <span class="text-xs font-bold text-slate-700">Exec: <span class="font-mono font-normal text-slate-500">${job.ExecutionId || 'N/A'}</span></span>
-                                <span class="text-xs text-slate-400">ID: ${job._id}</span>
-                             </div>
-                        </td>
-                        <td class="px-4 py-3">
-                            <div class="flex flex-col gap-1">
-                                <span class="text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-600 border border-slate-200 w-fit">RCA: ${job.RCA_ID || '-'}</span>
-                                <span class="text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-600 border border-slate-200 w-fit">Thread: ${job.threadId || '-'}</span>
-                            </div>
-                        </td>
-                        <td class="px-4 py-3 text-center">
-                            ${job.is_mailsent 
-                                ? '<i class="ph ph-check-fat text-emerald-500 text-lg"></i>' 
-                                : '<i class="ph ph-x text-slate-300 text-lg"></i>'}
-                        </td>
-                        <td class="px-4 py-3 max-w-[150px]">
-                            ${truncateText(job.mailsent_text)}
-                        </td>
-                        <td class="px-4 py-3 max-w-[150px]">
-                            ${truncateText(job.mailrecived_text)}
-                        </td>
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <div class="flex flex-col text-xs">
-                                <span class="text-slate-600">C: ${formatDate(job.CreatedAt)}</span>
-                                <span class="text-slate-400">U: ${formatDate(job.UpdatedAt)}</span>
-                            </div>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            } catch (err) {
-                console.error("Error fetching jobs:", err);
-                document.getElementById("lastUpdated").innerText = "Connection Error";
-                document.getElementById("lastUpdated").className = "text-xs text-rose-500 font-bold";
-            }
+    } catch (err) {
+        console.error(err);
+        updateConnectionStatus(false);
+    }
+}
+
+function renderTable(jobs) {
+    const tbody = document.getElementById("jobsTableBody");
+
+    if (jobs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-12 text-center text-slate-400">No active jobs found.</td></tr>`;
+        return;
+    }
+
+    let html = "";
+
+    jobs.forEach((job, i) => {
+        const isExpanded = expandedRows.has(job._id);
+
+        const process = job.Process || "--";
+        const robot = job.Robot || "--";
+        const entryFile = job.EntryFile || "--";
+
+        html += `
+        <tr class="hover:bg-slate-50 transition-colors">
+            <td class="text-center">
+                <button onclick="toggleLogs('${job._id}')">
+                    <i class="ph-bold ph-caret-down text-lg ${isExpanded ? "rotate-180 text-indigo-600" : "text-slate-400"}"></i>
+                </button>
+            </td>
+
+            <td>${getStatusBadge(job.status)}</td>
+
+            <td>
+                <span class="text-xs font-mono bg-slate-100 px-2 py-1 rounded border border-slate-200">${job.ExecutionId || "N/A"}</span>
+            </td>
+
+            <td>
+                <div class="flex flex-col text-xs">
+                    <div><span class="font-bold text-slate-500">Process:</span> <span>${process}</span></div>
+                    <div><span class="font-bold text-slate-500">Robot:</span> <span class="text-indigo-700">${robot}</span></div>
+                    <div><span class="font-bold text-slate-500">Entry File:</span> <span class="font-mono">${entryFile}</span></div>
+                </div>
+            </td>
+
+            <td>
+                ${job.is_mailsent ? getMaskedEmail(job.mailsent_text) : `<span class="text-xs text-slate-300">Not Sent</span>`}
+            </td>
+
+            <td>
+                ${getAcknowledgementBadge(job.mailrecived_text, job.is_mailsent)}
+            </td>
+
+            <td>
+                <div class="flex flex-col text-xs text-slate-500 border-l-2 border-slate-100 pl-3">
+                    <div class="flex justify-between"><span>Start</span><span class="font-mono">${formatDate(job.CreatedAt).split(",")[1]}</span></div>
+                    <div class="flex justify-between"><span>End</span><span class="font-mono">${formatDate(job.UpdatedAt).split(",")[1]}</span></div>
+                    <div class="mt-1 bg-indigo-50 text-indigo-600 font-mono text-[10px] px-1.5 rounded">
+                        <i class="ph-bold ph-timer"></i> ${calculateDuration(job.CreatedAt, job.UpdatedAt)}
+                    </div>
+                </div>
+            </td>
+
+            <td class="text-right">
+                <button onclick="toggleLogs('${job._id}')" class="text-xs bg-white border px-3 py-1.5 rounded-lg">
+                    ${isExpanded ? "Close" : "View Logs"}
+                </button>
+            </td>
+        </tr>
+
+        <tr id="log-row-${job._id}" class="${isExpanded ? "" : "hidden"} bg-slate-50/50">
+            <td colspan="8">
+                <div id="log-container-${job._id}" class="p-4 pl-14">
+                    ${isExpanded ? `<div class="text-indigo-600 text-xs animate-pulse">Fetching logs...</div>` : ""}
+                </div>
+            </td>
+        </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+
+    expandedRows.forEach(fetchLogs);
+}
+
+function toggleLogs(id) {
+    if (expandedRows.has(id)) {
+        expandedRows.delete(id);
+    } else {
+        expandedRows.add(id);
+    }
+    fetchJobs();
+}
+
+async function fetchLogs(jobId) {
+    const container = document.getElementById(`log-container-${jobId}`);
+    if (!container) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/auditlogs/job/${jobId}`);
+        const logs = await response.json();
+
+        if (!logs.length) {
+            container.innerHTML = `<div class="text-slate-400 text-xs italic">No logs recorded.</div>`;
+            return;
         }
 
-        // --- Modal Logic ---
-        const modal = document.getElementById('detailModal');
-        const modalContent = document.getElementById('modalContent');
+        let logHtml = `
+            <div class="bg-white rounded-xl border p-2">
+                <table class="text-xs w-full">
+                    <thead class="text-slate-500 border-b">
+                        <tr>
+                            <th class="px-2 py-1">Time</th>
+                            <th class="px-2 py-1">Actor</th>
+                            <th class="px-2 py-1">Type</th>
+                            <th class="px-2 py-1">Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
 
-        function openModal(encodedText) {
-            const text = decodeURIComponent(encodedText);
-            modalContent.textContent = text;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeModal() {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        // Close modal when clicking outside
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
+        logs.forEach(log => {
+            const time = new Date(log.timestamp).toLocaleTimeString("en-US", { hour12: false });
+            logHtml += `
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="px-2 py-1 font-mono">${time}</td>
+                    <td class="px-2 py-1">${log.actor}</td>
+                    <td class="px-2 py-1">${log.jobType}</td>
+                    <td class="px-2 py-1">${log.message}</td>
+                </tr>
+            `;
         });
 
-        // Initial fetch
-        fetchJobs();
+        logHtml += "</tbody></table></div>";
+        container.innerHTML = logHtml;
 
-        // Poll every 3 seconds
-        setInterval(fetchJobs, 3000);
-    </script>
+    } catch (e) {
+        container.innerHTML = `<div class="text-rose-500 text-xs">Error loading logs</div>`;
+    }
+}
+
+fetchJobs();
+setInterval(fetchJobs, 3000);
+
+</script>
+
 </body>
 </html>

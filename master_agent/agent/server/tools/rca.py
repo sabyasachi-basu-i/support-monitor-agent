@@ -103,17 +103,6 @@ async def get_rca_response(jobid: str):
 
 
 
-# Example usage
-# rca_id, Suggested_Action,confidence  = rca_analyizer(
-#     "TDECU_Insurance_Disbursement", 
-#     "Faulted", 
-#     "DNA Application Login failed"
-# )
-
-
-# print("RCA_ID:", rca_id)
-# print("Base_Confidence:", confidence)
-
 
 
     

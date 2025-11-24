@@ -55,7 +55,7 @@ async def action_job() -> dict:
     PUT request to update an existing job
     """
     url = f"http://localhost:8001/restart"
-    response = requests.put(url)
+    response = requests.post(url)
     response.raise_for_status()
     return response.json()
     

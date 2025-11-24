@@ -57,7 +57,7 @@ async def create_job(job: Job):
 
 @app.get("/jobs")
 async def get_jobs():
-    jobs = await db.jobs.find().to_list(2000)
+    jobs = await db.jobs.find().sort("CreatedAt", -1).to_list(2000)
     return [convert_id(j) for j in jobs]
 
 @app.get("/jobs/{job_id}")

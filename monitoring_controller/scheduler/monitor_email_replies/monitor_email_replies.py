@@ -141,6 +141,7 @@ async def process_email_replies():
             {"_id": job["_id"]},
             {
                 "$set": {
+                    "status":"Processing",
                     "mailrecived_text": body,
                     "UpdatedAt": datetime.now(timezone.utc),
                 }

@@ -32,7 +32,7 @@ You will receive a job response object with the following fields:
             - If confirmation is required before proceeding.
 
 2. **Mail Handling**
-    - If the RCA tool indicates that a mail should be sent:
+    - Based on the RCA response, send a confirmation email to the developer if the RCA returns that this action is needed.:
         - Send the mail using the **Mail Send tool**.
         - Update `is_mailsent` to `True` and store mail content in `mailsent_text`.
     - If a mail has been received (`mailrecived_text` exists):
@@ -40,7 +40,8 @@ You will receive a job response object with the following fields:
         - Only proceed with the next action if confirmation is explicitly received.
 
 3. **Action Execution**
-    - Once the RCA response is confirmed and mail confirmation is received (if required):
+    - Once the mail confirmation is received and pass this param mailrecived_text (if required):
+        - RCA response is confirmed
         - Trigger the appropriate **ActionFlow** task based on the RCA instructions.
         - Update the job `status` to reflect the action taken.
 

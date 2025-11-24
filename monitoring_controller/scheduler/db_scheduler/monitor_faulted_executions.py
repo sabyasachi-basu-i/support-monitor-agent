@@ -25,7 +25,7 @@ async def process_faulted_executions():
                 job_data = Job(
                         ExecutionId=exec_id,
                         JobType="RetryFaulted",
-                        status="Pending",
+                        status="Started",
                         is_mailsent=False,
                         mailrecived_text= "",
                         mailsent_text = ""
