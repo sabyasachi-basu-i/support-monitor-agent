@@ -13,7 +13,7 @@ IMAP_SERVER = "imap.gmail.com"
 SENDER_EMAIL = "rameshbomburi123@gmail.com"
 SENDER_PASSWORD = "lhsy vfvv fsae abpr"  # 16-char App password
 
-RECEIVER_EMAIL = "rameshbomburi121@gmail.com"  # can be same as sender
+DEVELOPER_EMAIL = "rameshbomburi121@gmail.com"  # can be same as sender
 
 # ------------------------
 # Step 1: Send email
@@ -30,7 +30,7 @@ message = f"Subject: {subject}\n\n{body}"
 with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
     server.starttls()
     server.login(SENDER_EMAIL, SENDER_PASSWORD)
-    server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, message)
+    server.sendmail(SENDER_EMAIL, DEVELOPER_EMAIL, message)
     print("Email sent successfully!")
 
 # ------------------------
@@ -41,7 +41,7 @@ def check_reply():
     mail.login(SENDER_EMAIL, SENDER_PASSWORD)
     mail.select("inbox")
 
-    result, data = mail.search(None, f'(FROM "{RECEIVER_EMAIL}")')
+    result, data = mail.search(None, f'(FROM "{DEVELOPER_EMAIL}")')
     mail_ids = data[0].split()
 
     if not mail_ids:

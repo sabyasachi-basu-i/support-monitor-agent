@@ -14,8 +14,9 @@ async def read_root(jobid: str):
     JobId : {job["_id"]}
     JOB: {job}
     LOGS: {logs}
+    EXCECUTION: {execution}
     """
-    # print(message)
+    print(message)
     response = await setup_agent(message,job["_id"])
     return response
 

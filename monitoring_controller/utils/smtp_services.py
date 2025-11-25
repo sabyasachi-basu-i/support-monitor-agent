@@ -17,16 +17,21 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 IMAP_SERVER = os.getenv("IMAP_SERVER")
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
-RECEIVER_EMAIL = os.getenv("RECEIVER_EMAIL")
+DEVELOPER_EMAIL = os.getenv("DEVELOPER_EMAIL")
+BUSINESS_EMAIL = os.getenv("BUSINESS_EMAIL")
 
-
-async def send_email_SMTP(subject: str, body: str, job_id: str) -> bool:
-    logging.info(f"Preparing to send email to {RECEIVER_EMAIL} with subject '{subject}'")
+async def send_email_SMTP(subject: str, body: str, job_id: str,email_type:str) -> bool:
+    logging.info(f"Preparing to send email to {DEVELOPER_EMAIL} with subject '{subject}'")
     short_id = uuid.uuid4().hex[:4]  
     subject = f"{subject} {short_id}"
     msg = MIMEMultipart()
     msg['From'] = SENDER_EMAIL
-    msg['To'] = RECEIVER_EMAIL
+    if email_type =="Business":
+        msg['To'] = BUSINESS_EMAIL    
+    else:
+        msg['To'] = DEVELOPER_EMAIL    
+        
+
     msg['Subject'] = subject
    
 
