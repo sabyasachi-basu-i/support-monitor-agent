@@ -122,4 +122,4 @@ Step	Description
 
 📄 Licensing & Contribution
 
-Feel free to customize, extend, or integrate with your own automation platforms. Contributions are welcome
+Feel free to customize, extend, or integrate with your own automation platforms. Contributions are welcome!
