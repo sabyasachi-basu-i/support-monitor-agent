@@ -21,10 +21,13 @@
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* Fix column spacing */
+        /* 
+           UPDATED: Increased padding from 12px to 16px 
+           to fix column spacing breathing room 
+        */
         table td, table th {
-            padding-left: 12px !important;
-            padding-right: 12px !important;
+            padding-left: 16px !important;
+            padding-right: 16px !important;
         }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -63,7 +66,7 @@
         <div class="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-200 flex flex-col h-full overflow-hidden ring-1 ring-black/5">
             
             <div class="overflow-auto custom-scroll flex-1 relative">
-                <table class="w-full text-left border-collapse min-w-[1300px]">
+                <table class="w-full text-left border-collapse min-w-[1400px]">
                     <thead class="bg-slate-50/80 backdrop-blur text-slate-500 text-xs uppercase font-bold tracking-wider sticky top-0 z-10 shadow-sm border-b border-slate-200">
                         <tr>
                             <th class="px-4 py-3 w-10 text-center">#</th>
@@ -72,8 +75,12 @@
                             <th class="px-4 py-3 w-64">Job Details</th>
                             <th class="px-4 py-3 w-48">Mail Sent To</th>
                             <th class="px-4 py-3 w-40">Acknowledgement</th>
-                            <th class="px-4 py-3 w-48">Timeline & Duration</th>
-                            <th class="px-4 py-3 text-right w-28">Actions</th>
+                            <th class="px-4 py-3 w-40 text-left">Started</th>
+                            <th class="px-4 py-3 w-40 text-left">Ended</th>
+                            <th class="px-4 py-3 w-24 text-center">Duration</th>
+                            
+                            <!-- UPDATED: Changed alignment to center and width to w-36 -->
+                            <th class="px-4 py-3 text-center w-36">Actions</th>
                         </tr>
                     </thead>
 
@@ -112,19 +119,23 @@ function updateConnectionStatus(isOnline) {
 }
 
 function formatDate(dateString) {
-    if (!dateString) return "-";
-    return new Date(dateString).toLocaleString("en-US", {
+    if (!dateString) return `<span class="text-xs text-slate-300">—</span>`;
+    return new Date(dateString).toLocaleTimeString("en-US", {
         month: "short",
         day: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
         hour12: true,
-    });
+    }).replace(/,/, '<br>'); 
 }
 
 function calculateDuration(startStr, endStr) {
-    if (!startStr || !endStr) return "-";
+    if (!startStr || !endStr) return `
+        <div class="inline-flex bg-slate-100 text-slate-500 font-mono text-[10px] px-2 py-1 rounded-full items-center justify-center font-bold">
+            <i class="ph-bold ph-timer mr-1"></i> Running...
+        </div>`;
+    
     const diff = new Date(endStr) - new Date(startStr);
     if (diff < 0) return "0s";
 
@@ -136,7 +147,11 @@ function calculateDuration(startStr, endStr) {
     if (h > 0) d.push(`${h}h`);
     if (m > 0) d.push(`${m}m`);
     d.push(`${s}s`);
-    return d.join(" ");
+    
+    return `
+        <div class="inline-flex bg-indigo-50 text-indigo-600 font-mono text-[10px] px-2 py-1 rounded-full items-center justify-center font-bold shadow-sm">
+            <i class="ph-bold ph-timer mr-1"></i> ${d.join(" ")}
+        </div>`;
 }
 
 function getStatusBadge(status) {
@@ -157,10 +172,9 @@ function getStatusBadge(status) {
 
     return `
         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${style} shadow-sm">
-            <i class="ph-bold "></i> ${status || "Unknown"}
+            <i class="ph-bold ${icon}"></i> ${status || "Unknown"}
         </span>`;
-
-    }
+}
 
 function getAcknowledgementBadge(text, isMailSent) {
 
@@ -169,7 +183,7 @@ function getAcknowledgementBadge(text, isMailSent) {
     if (isMailSent && (!text || text.trim() === "")) {
         return `
             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium">
-                <i class="ph-fill ph-clock"></i> Pending Response
+                <i class="ph-fill ph-clock"></i> Waiting for Response
             </span>`;
     }
 
@@ -189,9 +203,9 @@ function getAcknowledgementBadge(text, isMailSent) {
             </span>`;
     }
 
-    return  `
+    return `
             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-green-50 text-green-700 border border-green-200 text-xs font-medium">
-                  Responded
+                Responded
             </span>`;
 }
 
@@ -199,18 +213,18 @@ function getMaskedEmail(text) {
     const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/;
     const match = text ? text.match(emailRegex) : null;
     
-    let email = "admin@gmail.com"; 
+    let email = "admin@governor.io"; 
     if (match) email = match[0];
 
     const [local, domain] = email.split('@');
-    const maskedLocal = local.length > 2 ? local.substring(0, 2) + '**' : local + '**';
+    const maskedLocal = local.length > 3 ? local.substring(0, 3) + '***' : local + '***';
     
     return `
         <div class="flex items-start gap-3">
-            <div class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
+            <div class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 shadow-md">
                 <i class="ph-fill ph-paper-plane-tilt"></i>
             </div>
-            <div class="flex flex-col">
+            <div class="flex flex-col pt-0.5">
                 <span class="text-[10px] uppercase tracking-wide font-bold text-slate-400">Recipient</span>
                 <span class="text-xs font-mono text-slate-700 font-medium">${maskedLocal}@${domain}</span>
             </div>
@@ -251,7 +265,7 @@ function renderTable(jobs) {
     const tbody = document.getElementById("jobsTableBody");
 
     if (jobs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-12 text-center text-slate-400">No active jobs found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="p-12 text-center text-slate-400">No active jobs found.</td></tr>`;
         return;
     }
 
@@ -260,61 +274,72 @@ function renderTable(jobs) {
     jobs.forEach((job, i) => {
         const isExpanded = expandedRows.has(job._id);
 
-        const process = job.Process || "--";
-        const robot = job.Robot || "--";
-        const entryFile = job.EntryFile || "--";
+        const process = job.Process || "N/A";
+        const robot = job.Robot || "N/A";
+        const entryFile = job.EntryFile || "N/A";
 
         html += `
         <tr class="hover:bg-slate-50 transition-colors">
+            <!-- # Column -->
             <td class="text-center">
-                <button onclick="toggleLogs('${job._id}')">
+                <button onclick="toggleLogs('${job._id}')" class="p-1 rounded-full hover:bg-slate-200 transition-colors">
                     <i class="ph-bold ph-caret-down text-lg ${isExpanded ? "rotate-180 text-indigo-600" : "text-slate-400"}"></i>
                 </button>
             </td>
 
+            <!-- Status Column -->
             <td>${getStatusBadge(job.status)}</td>
 
+            <!-- Execution ID Column -->
             <td>
                 <span class="text-xs font-mono bg-slate-100 px-2 py-1 rounded border border-slate-200">${job.ExecutionId || "N/A"}</span>
             </td>
 
+            <!-- Job Details Column -->
             <td>
-                <div class="flex flex-col text-xs">
-                    <div><span class="font-bold text-slate-500">Process:</span> <span>${process}</span></div>
-                    <div><span class="font-bold text-slate-500">Robot:</span> <span class="text-indigo-700">${robot}</span></div>
-                    <div><span class="font-bold text-slate-500">Entry File:</span> <span class="font-mono">${entryFile}</span></div>
+                <div class="flex flex-col text-xs space-y-0.5">
+                    <div><span class="font-bold text-slate-500">Process:</span> <span class="text-slate-700">${process}</span></div>
+                    <div><span class="font-bold text-slate-500">Robot:</span> <span class="text-indigo-700 font-medium">${robot}</span></div>
+                    <div><span class="font-bold text-slate-500">Entry File:</span> <span class="font-mono text-slate-600">${entryFile}</span></div>
                 </div>
             </td>
 
+            <!-- Mail Sent To Column -->
             <td>
-                ${job.is_mailsent ? getMaskedEmail(job.mailsent_text) : `<span class="text-xs text-slate-300">Not Sent</span>`}
+                ${job.is_mailsent ? getMaskedEmail(job.mailsent_text) : `<span class="text-xs text-slate-400 italic">No notification</span>`}
             </td>
 
+            <!-- Acknowledgement Column -->
             <td>
                 ${getAcknowledgementBadge(job.mailrecived_text, job.is_mailsent)}
             </td>
 
-            <td>
-                <div class="flex flex-col text-xs text-slate-500 border-l-2 border-slate-100 pl-3">
-                    <div class="flex justify-between"><span>Start</span><span class="font-mono">${formatDate(job.CreatedAt).split(",")[1]}</span></div>
-                    <div class="flex justify-between"><span>End</span><span class="font-mono">${formatDate(job.UpdatedAt).split(",")[1]}</span></div>
-                    <div class="mt-1 bg-indigo-50 text-indigo-600 font-mono text-[10px] px-1.5 rounded">
-                        <i class="ph-bold ph-timer"></i> ${calculateDuration(job.CreatedAt, job.UpdatedAt)}
-                    </div>
-                </div>
+            <!-- STARTED Column -->
+            <td class="text-xs font-mono text-slate-700 align-top pt-3">${formatDate(job.CreatedAt)}</td>
+
+            <!-- ENDED Column -->
+            <td class="text-xs font-mono text-slate-700 align-top pt-3">${formatDate(job.UpdatedAt)}</td>
+
+            <!-- DURATION Column -->
+            <td class="text-center align-top pt-3">
+                ${calculateDuration(job.CreatedAt, job.UpdatedAt)}
             </td>
 
-            <td class="text-right">
-                <button onclick="toggleLogs('${job._id}')" class="text-xs bg-white border px-3 py-1.5 rounded-lg">
-                    ${isExpanded ? "Close" : "View Logs"}
+            <!-- 
+                UPDATED Actions Column: 
+                Changed text-right to text-center to align button with header properly
+            -->
+            <td class="text-center align-top pt-3">
+                <button onclick="toggleLogs('${job._id}')" class="text-xs font-medium bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors shadow-sm">
+                    ${isExpanded ? "Close Logs" : "View Workflow"}
                 </button>
             </td>
         </tr>
 
         <tr id="log-row-${job._id}" class="${isExpanded ? "" : "hidden"} bg-slate-50/50">
-            <td colspan="8">
+            <td colspan="10">
                 <div id="log-container-${job._id}" class="p-4 pl-14">
-                    ${isExpanded ? `<div class="text-indigo-600 text-xs animate-pulse">Fetching logs...</div>` : ""}
+                    ${isExpanded ? `<div class="text-indigo-600 text-xs animate-pulse font-medium">Fetching logs from server...</div>` : ""}
                 </div>
             </td>
         </tr>
@@ -332,7 +357,7 @@ function toggleLogs(id) {
     } else {
         expandedRows.add(id);
     }
-    fetchJobs();
+    fetchJobs(); 
 }
 
 async function fetchLogs(jobId) {
@@ -344,32 +369,43 @@ async function fetchLogs(jobId) {
         const logs = await response.json();
 
         if (!logs.length) {
-            container.innerHTML = `<div class="text-slate-400 text-xs italic">No logs recorded.</div>`;
+            container.innerHTML = `<div class="p-2 text-slate-400 text-xs italic bg-white rounded-lg border border-slate-200">No logs recorded for this execution.</div>`;
             return;
         }
 
         let logHtml = `
-            <div class="bg-white rounded-xl border p-2">
-                <table class="text-xs w-full">
-                    <thead class="text-slate-500 border-b">
+            <div class="bg-white rounded-xl border border-slate-200 shadow-lg shadow-slate-100 p-2 max-h-80 overflow-y-auto custom-scroll">
+                <table class="text-xs w-full text-left">
+                    <thead class="text-slate-500 sticky top-0 bg-white border-b border-slate-200">
                         <tr>
-                            <th class="px-2 py-1">Time</th>
-                            <th class="px-2 py-1">Actor</th>
-                            <th class="px-2 py-1">Type</th>
-                            <th class="px-2 py-1">Message</th>
+                            <th class="px-3 py-2 w-24">Time</th>
+                            <th class="px-3 py-2 w-24">Actor</th>
+                            <th class="px-3 py-2 w-20">Type</th>
+                            <th class="px-3 py-2">Message</th>
                         </tr>
                     </thead>
                     <tbody>
         `;
 
         logs.forEach(log => {
-            const time = new Date(log.timestamp).toLocaleTimeString("en-US", { hour12: false });
+            const time = new Date(log.timestamp).toLocaleTimeString("en-US");
+            let rowClass = "";
+            let messageStyle = "";
+
+            if (log.jobType.toLowerCase() === 'error') {
+                rowClass = "bg-rose-50/50";
+                messageStyle = "text-rose-700 font-medium";
+            } else if (log.jobType.toLowerCase() === 'success') {
+                rowClass = "bg-emerald-50/50";
+                messageStyle = "text-emerald-700 font-medium";
+            }
+            
             logHtml += `
-                <tr class="border-b hover:bg-slate-50">
-                    <td class="px-2 py-1 font-mono">${time}</td>
-                    <td class="px-2 py-1">${log.actor}</td>
-                    <td class="px-2 py-1">${log.jobType}</td>
-                    <td class="px-2 py-1">${log.message}</td>
+                <tr class="border-b border-slate-100 hover:bg-slate-100/70 ${rowClass}">
+                    <td class="px-3 py-1.5 font-mono text-slate-600">${time}</td>
+                    <td class="px-3 py-1.5 text-indigo-600 font-medium">${log.actor}</td>
+                    <td class="px-3 py-1.5 text-xs text-slate-500">${log.jobType}</td>
+                    <td class="px-3 py-1.5 ${messageStyle}">${log.message}</td>
                 </tr>
             `;
         });
@@ -378,7 +414,7 @@ async function fetchLogs(jobId) {
         container.innerHTML = logHtml;
 
     } catch (e) {
-        container.innerHTML = `<div class="text-rose-500 text-xs">Error loading logs</div>`;
+        container.innerHTML = `<div class="p-2 text-rose-500 text-xs bg-white rounded-lg border border-rose-200">Error loading logs: Could not reach log service.</div>`;
     }
 }
 

@@ -21,7 +21,7 @@ async def predict_rca_with_llm(execution, logs, rca_list):
     """
     # Prepare clean prompt
     prompt = f"""
-You are an expert RPA Root Cause Analyzer.
+You are an expert RCA Root Cause Analyzer.
 
 You will be given:
 1. A list of historical RCA records
@@ -34,7 +34,7 @@ Your job:
 - Output ONLY a JSON object (no explanation) with:
     {{
        "RCA_ID": "<best RCA_ID>",
-       "Match_Confidence": <0-1>,
+       "Base_Confidence": <0-10>,
        "Predicted_Root_Cause": "<text>",
        "Predicted_Solution": "<text>",
        "RCA_ACTION": "<Description of action to take Suggested_Action>",

@@ -61,7 +61,7 @@ async def run_ws_client(access_token: str, connection_token: str):
         await asyncio.sleep(0.1)
 
         async def fetch_executions():
-            await ws.send(make_invocation("ViewExecution", "1", [0, 50, None]))
+            await ws.send(make_invocation("ViewExecution", "1", [0, 1, None]))
             print("📤 Requested executions")
 
         async def fetch_logs(execution_ids):

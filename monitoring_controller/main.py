@@ -6,7 +6,7 @@ from db_connection.database import db,ensure_collections,watch_jobs_changes
 from schemas.job_schema import Job,JobUpdate
 from schemas.execution_schema import Execution
 from schemas.logs_schema import Log
-from schemas.rca_schema import RCA
+from schemas.rca_schema import RCA,RCAUpdate
 from schemas.auditlog_schema import AuditLog
 import asyncio
 from scheduler.execution_scheduler.ws_client import run_ws_client
@@ -52,7 +52,7 @@ async def start_ws_client():
 # -------------------------------
 @app.post("/jobs")
 async def create_job(job: Job):
-    result = await db.jobs.insert_one(job.dict())
+    result = await db.jobs.insert_one(job.model_dump())
     return {"status": "Job inserted", "id": str(result.inserted_id)}
 
 @app.get("/jobs")
@@ -148,6 +148,50 @@ async def get_rca_by_id(rca_id: str):
         raise HTTPException(status_code=404, detail="RCA not found")
     return convert_id(rca)
 
+@app.put("/rca/{rca_id}")
+async def update_rca(rca_id: str, rca_update: RCAUpdate):
+    """
+    Update an existing RCA record by RCA_ID.
+    Supports partial updates: only provided fields are updated.
+    """
+    # Convert RCAUpdate object to dict and remove None values
+    update_data = {k: v for k, v in rca_update.dict().items() if v is not None}
+
+    if not update_data:
+        return {"status": "No fields to update"}
+
+    # Always update timestamp
+    update_data["UpdatedAt"] = datetime.now(timezone.utc)
+
+    result = await db.rca.update_one(
+        {"RCA_ID": rca_id},
+        {"$set": update_data}
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="RCA not found")
+
+    # Return the updated record
+    updated_rca = await db.rca.find_one({"RCA_ID": rca_id})
+    return convert_id(updated_rca)
+
+@app.post("/add_rca")
+async def add_new_rca_endpoint(rca: RCA):
+    """
+    API endpoint to add a new RCA record.
+    """
+    try:
+        result = await db.rca.insert_one(rca.model_dump())
+        return {
+            "status": "success",
+            "message": "RCA added successfully",
+            "id": str(result.inserted_id)
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Failed to add RCA: {str(e)}"
+        }
 
 # -------------------------------
 # AUDIT LOG APIs
@@ -193,12 +237,12 @@ async def get_audit_logs_by_job_id(job_id: str):
     return [convert_id(log) for log in logs]
 
 @app.post("/send_email")
-async def send_email(subject:str,body:str,job_id:str):
+async def send_email(subject:str,body:str,job_id:str,email_type:str):
     """
     Generates subject and body using LLM, then sends email.
     """
     print(f"subject : {subject}, body: {body}, job_id: {job_id}")
-    success = await send_email_SMTP(subject, body,job_id)
+    success = await send_email_SMTP(subject, body,job_id,email_type)
 
     return {"success": success, "subject": subject, "body": body}
 

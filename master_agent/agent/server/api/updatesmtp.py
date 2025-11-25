@@ -25,7 +25,7 @@ IMAP_SERVER = "imap.gmail.com"
 
 SENDER_EMAIL = "your_email@gmail.com"
 SENDER_PASSWORD = "your_app_password"  # Use environment variable in production
-RECEIVER_EMAIL = "receiver_email@gmail.com"
+DEVELOPER_EMAIL = "DEVELOPER_EMAIL@gmail.com"
 
 # ------------------------
 # Send Email Function
@@ -44,7 +44,7 @@ If you want to allow the restart, reply YES; otherwise reply NO.
     with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
         server.starttls()
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
-        server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, message)
+        server.sendmail(SENDER_EMAIL, DEVELOPER_EMAIL, message)
 
     # Update MongoDB
     job_collection.update_one(
@@ -68,7 +68,7 @@ def check_reply() -> Tuple[Optional[str], Optional[str]]:
     mail.login(SENDER_EMAIL, SENDER_PASSWORD)
     mail.select("inbox")
 
-    result, data = mail.search(None, f'(FROM "{RECEIVER_EMAIL}")')
+    result, data = mail.search(None, f'(FROM "{DEVELOPER_EMAIL}")')
     mail_ids = data[0].split()
 
     if not mail_ids:

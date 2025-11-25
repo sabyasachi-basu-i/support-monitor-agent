@@ -85,6 +85,18 @@ async def get_rca_list() -> list[dict]:
     #         "Action 3"
     #     ]
     # }
+    
+async def update_rca(rca_id: str, rca_update: dict) -> dict:
+    """
+    PUT request to update an existing rca
+    """
+    url = f"http://localhost:8001/rca/{rca_id}"
+    response = requests.put(url, json=rca_update)
+    response.raise_for_status()
+    return response.json()
+    
+    
+
 async def get_execution_by_executionid(execution_id:str):
     url=f"http://localhost:8001/executions/{execution_id}"
     response = requests.get(url)
