@@ -2,7 +2,6 @@
 from fastapi import FastAPI
 from agent.client.client import setup_agent
 from agent.server.api.jobs import get_job_by_id, get_logs_by_execution_id,get_execution_by_executionid ,get_rca_by_id
-from agent.server.tools.rca import rca_analyizer
 app = FastAPI()
 
 @app.post("/v1/event")
@@ -10,10 +9,12 @@ async def read_root(jobid: str):
     job = await get_job_by_id(jobid)
     logs = await get_logs_by_execution_id(job["ExecutionId"])
     execution  =await get_execution_by_executionid(job["ExecutionId"])
-    print(execution)
+    # print(execution)
     message = f"""
+    JobId : {job["_id"]}
     JOB: {job}
     LOGS: {logs}
+    EXCECUTION: {execution}
     """
     print(message)
     response = await setup_agent(message,job["_id"])

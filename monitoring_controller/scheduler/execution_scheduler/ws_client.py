@@ -61,7 +61,7 @@ async def run_ws_client(access_token: str, connection_token: str):
         await asyncio.sleep(0.1)
 
         async def fetch_executions():
-            await ws.send(make_invocation("ViewExecution", "1", [0, 50, None]))
+            await ws.send(make_invocation("ViewExecution", "1", [0, 1, None]))
             print("📤 Requested executions")
 
         async def fetch_logs(execution_ids):
@@ -72,12 +72,14 @@ async def run_ws_client(access_token: str, connection_token: str):
                     [exc_id, 0, 50, datetime.now().day, datetime.now().month, datetime.now().year, ""]
                 ))
             print("📤 Requested logs for executions:", execution_ids)
+            
+        
 
         # Run first fetch immediately
         await fetch_executions()
 
         # Schedule periodic fetch every 10 minutes
-        asyncio.create_task(periodic_fetch(ws, fetch_executions, interval=600))
+        asyncio.create_task(periodic_fetch(ws, fetch_executions, interval=300))
 
         global all_exec, all_logs
         while True:
@@ -114,7 +116,7 @@ async def run_ws_client(access_token: str, connection_token: str):
 # -------------------------------
 # Periodic fetch task
 # -------------------------------
-async def periodic_fetch(ws, fetch_func, interval=600):
+async def periodic_fetch(ws, fetch_func, interval=10):
     while True:
         await asyncio.sleep(interval)
         await fetch_func()

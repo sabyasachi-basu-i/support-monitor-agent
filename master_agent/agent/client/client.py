@@ -6,7 +6,13 @@ import os,json
 import asyncio
 from mcp_use import MCPAgent, MCPClient
 from agent.server.api.jobs import create_audit_logs
+from langchain import messages
+from mcp.shared.exceptions import McpError
+
+
 load_dotenv()
+
+LLM_MODEL = os.getenv("MODEL")
 
 if not os.getenv("GROQ_API_KEY"):
     raise RuntimeError("Missing GROQ_API_KEY in .env")
@@ -24,26 +30,25 @@ instructions = read_instructions()
 async def setup_agent(message,job_id): 
     
     base_dir = os.path.dirname(__file__)
-    server_path = os.path.abspath( os.path.join(base_dir, "../server/server.py"))
+    server_path = os.path.abspath(os.path.join(base_dir, "../server/server.py"))
+
     config = {
-        # "master_mcp": {
-        #     "url": "http://localhost:8000/mcp",
-        #     "transport": "streamable_http"
-        # }
-       "mcpServers": {
-            "server":{
-                "command":"python",
-                "args":[server_path],
-                "transport": "stdio",
-            }        
+        "mcpServers": {
+            "server": {
+                "command": "python",
+                "args": [server_path],
+                "transport": "stdio",  # keep stdio but remove prints in server.py
+            }
         }
     }
 
-    print(server_path)
-
     client = MCPClient(config=config)
-    llm =  ChatGroq(model="qwen/qwen3-32b")
-    agent = MCPAgent(llm=llm, client=client,system_prompt=instructions,max_steps=30)
+    llm =  ChatGroq(model=LLM_MODEL)
+    agent = MCPAgent(
+        llm=llm,
+        client=client,
+        system_prompt=instructions, 
+        max_steps=30)
 
     result = await agent.run(message)
     audits: List[dict] = []

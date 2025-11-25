@@ -1,5 +1,6 @@
 FastAPI
 mcp_use
+fastapi
 langchain_mcp_adapters
 langchain_groq
 pymongo
@@ -8,3 +9,14 @@ aiohttp
 asyncio
 pandas
 openpyxl
+dotenv
+typing
+langchain
+mcp
+bson
+datetime
+websockets
+json
+os
+smtplib
+email

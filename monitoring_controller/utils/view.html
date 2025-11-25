@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Governer Monitor</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f8fafc; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* 
+           UPDATED: Increased padding from 12px to 16px 
+           to fix column spacing breathing room 
+        */
+        table td, table th {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm z-20">
+        <div class="flex items-center gap-4">
+            <div class="p-2.5 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl text-white shadow-md shadow-indigo-200">
+                <i class="ph ph-robot text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-slate-900 tracking-tight">Smart Governor Monitor</h1>
+                <p class="text-xs text-slate-500 font-medium">Real-time Process Execution & Audit Logs</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-5">
+            <div id="connectionBadge" class="flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-500 rounded-full text-xs font-semibold border border-slate-200 transition-all duration-300">
+                <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                Connecting...
+            </div>
+            
+            <div class="flex flex-col items-end">
+                <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Last Sync</span>
+                <span id="lastUpdated" class="text-xs font-mono text-slate-600">--:--:--</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 overflow-hidden flex flex-col">
+        <div class="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-200 flex flex-col h-full overflow-hidden ring-1 ring-black/5">
+            
+            <div class="overflow-auto custom-scroll flex-1 relative">
+                <table class="w-full text-left border-collapse min-w-[1400px]">
+                    <thead class="bg-slate-50/80 backdrop-blur text-slate-500 text-xs uppercase font-bold tracking-wider sticky top-0 z-10 shadow-sm border-b border-slate-200">
+                        <tr>
+                            <th class="px-4 py-3 w-10 text-center">#</th>
+                            <th class="px-4 py-3 w-32">Status</th>
+                            <th class="px-4 py-3 w-40">Execution ID</th>
+                            <th class="px-4 py-3 w-64">Job Details</th>
+                            <th class="px-4 py-3 w-48">Mail Sent To</th>
+                            <th class="px-4 py-3 w-40">Acknowledgement</th>
+                            <th class="px-4 py-3 w-40 text-left">Start Date</th>
+                            <th class="px-4 py-3 w-40 text-left">End Date</th>
+                            <th class="px-4 py-3 w-24 text-center">Duration</th>
+                            
+                            <!-- UPDATED: Changed alignment to center and width to w-36 -->
+                            <th class="px-4 py-3 text-center w-36">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="jobsTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </main>
+
+<script>
+
+const expandedRows = new Set();
+const API_BASE = "http://localhost:8001";
+
+function updateConnectionStatus(isOnline) {
+    const badge = document.getElementById("connectionBadge");
+    if (isOnline) {
+        badge.className =
+            "flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-100 shadow-sm transition-all duration-300";
+        badge.innerHTML = `
+            <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            Live Connection
+        `;
+    } else {
+        badge.className =
+            "flex items-center gap-2 px-3 py-1.5 bg-rose-50 text-rose-700 rounded-full text-xs font-semibold border border-rose-100 shadow-sm transition-all duration-300";
+        badge.innerHTML = `
+            <i class="ph-bold ph-warning-circle text-rose-600"></i>
+            Connection Lost
+        `;
+    }
+}
+
+function formatDate(dateString) {
+    if (!dateString) return `<span class="text-xs text-slate-300">—</span>`;
+    return new Date(dateString).toLocaleTimeString("en-US", {
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+    }).replace(/,/, '<br>'); 
+}
+
+function calculateDuration(startStr, endStr) {
+    if (!startStr || !endStr) return `
+        <div class="inline-flex bg-slate-100 text-slate-500 font-mono text-[10px] px-2 py-1 rounded-full items-center justify-center font-bold">
+            <i class="ph-bold ph-timer mr-1"></i> Running...
+        </div>`;
+    
+    const diff = new Date(endStr) - new Date(startStr);
+    if (diff < 0) return "0s";
+
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+
+    let d = [];
+    if (h > 0) d.push(`${h}h`);
+    if (m > 0) d.push(`${m}m`);
+    d.push(`${s}s`);
+    
+    return `
+        <div class="inline-flex bg-indigo-50 text-indigo-600 font-mono text-[10px] px-2 py-1 rounded-full items-center justify-center font-bold shadow-sm">
+            <i class="ph-bold ph-timer mr-1"></i> ${d.join(" ")}
+        </div>`;
+}
+
+function getStatusBadge(status) {
+    const s = (status || "").toLowerCase();
+    let style = "bg-slate-100 text-slate-600 border-slate-200";
+    let icon = "ph-minus";
+
+    if (s.includes("success") || s === "done") {
+        style = "bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-100";
+        icon = "ph-check-circle";
+    } else if (s.includes("fail") || s.includes("error")) {
+        style = "bg-rose-50 text-rose-700 border-rose-200 ring-1 ring-rose-100";
+        icon = "ph-warning-circle";
+    } else if (s.includes("running") || s.includes("pending")) {
+        style = "bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-100";
+        icon = "ph-spinner-gap animate-spin";
+    }
+
+    return `
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${style} shadow-sm">
+            <i class="ph-bold ${icon}"></i> ${status || "Unknown"}
+        </span>`;
+}
+
+function getAcknowledgementBadge(text, isMailSent,status) {
+
+    if (!isMailSent) return `<span class="text-xs text-slate-300">—</span>`;
+
+    if(isMailSent && (!text || text.trim() === "") && status ==="Completed"){
+         return `
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium">
+                Mail Sent
+            </span>`;
+    }
+    
+    if (isMailSent && (!text || text.trim() === "")) {
+        return `
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium">
+                <i class="ph-fill ph-clock"></i> Waiting for Response
+            </span>`;
+    }
+
+    const t = text.toLowerCase();
+
+    if (t.includes("approve")) {
+        return `
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-sm">
+                RCA Updated
+            </span>`;
+    }
+
+    if (t.includes("reject")) {
+        return `
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold shadow-sm">
+                <i class="ph-fill ph-thumbs-down"></i> Rejected
+            </span>`;
+    }
+
+    return `
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-green-50 text-green-700 border border-green-200 text-xs font-medium">
+                Responded
+            </span>`;
+}
+
+function getMaskedEmail(text) {
+    const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/;
+    const match = text ? text.match(emailRegex) : null;
+    
+    let email = "admin@governor.io"; 
+    if (match) email = match[0];
+
+    const [local, domain] = email.split('@');
+    const maskedLocal = local.length > 3 ? local.substring(0, 3) + '***' : local + '***';
+    
+    return `
+        <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 shadow-md">
+                <i class="ph-fill ph-paper-plane-tilt"></i>
+            </div>
+            <div class="flex flex-col pt-0.5">
+                <span class="text-[10px] uppercase tracking-wide font-bold text-slate-400">Recipient</span>
+                <span class="text-xs font-mono text-slate-700 font-medium">${maskedLocal}@${domain}</span>
+            </div>
+        </div>`;
+}
+
+async function fetchJobs() {
+    try {
+        const response = await fetch(`${API_BASE}/jobs`);
+        const jobs = await response.json();
+
+        const enriched = await Promise.all(
+            jobs.map(async job => {
+                if (job.ExecutionId) {
+                    try {
+                        const r = await fetch(`${API_BASE}/executions/${job.ExecutionId}`);
+                        if (r.ok) {
+                            const details = await r.json();
+                            return { ...job, Process: details.Process, Robot: details.Robot, EntryFile: details.EntryFile };
+                        }
+                    } catch {}
+                }
+                return { ...job, Process: null, Robot: null, EntryFile: null };
+            })
+        );
+
+        renderTable(enriched);
+        updateConnectionStatus(true);
+        document.getElementById("lastUpdated").innerText = new Date().toLocaleTimeString();
+
+    } catch (err) {
+        console.error(err);
+        updateConnectionStatus(false);
+    }
+}
+
+function renderTable(jobs) {
+    const tbody = document.getElementById("jobsTableBody");
+
+    if (jobs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="p-12 text-center text-slate-400">No active jobs found.</td></tr>`;
+        return;
+    }
+
+    let html = "";
+
+    jobs.forEach((job, i) => {
+        const isExpanded = expandedRows.has(job._id);
+
+        const process = job.Process || "N/A";
+        const robot = job.Robot || "N/A";
+        const entryFile = job.EntryFile || "N/A";
+
+        html += `
+        <tr class="hover:bg-slate-50 transition-colors">
+            <!-- # Column -->
+            <td class="text-center">
+                <button onclick="toggleLogs('${job._id}')" class="p-1 rounded-full hover:bg-slate-200 transition-colors">
+                    <i class="ph-bold ph-caret-down text-lg ${isExpanded ? "rotate-180 text-indigo-600" : "text-slate-400"}"></i>
+                </button>
+            </td>
+
+            <!-- Status Column -->
+            <td>${getStatusBadge(job.status)}</td>
+
+            <!-- Execution ID Column -->
+            <td>
+                <span class="text-xs font-mono bg-slate-100 px-2 py-1 rounded border border-slate-200">${job.ExecutionId || "N/A"}</span>
+            </td>
+
+            <!-- Job Details Column -->
+            <td>
+                <div class="flex flex-col text-xs space-y-0.5">
+                    <div><span class="font-bold text-slate-500">Process:</span> <span class="text-slate-700">${process}</span></div>
+                    <div><span class="font-bold text-slate-500">Robot:</span> <span class="text-indigo-700 font-medium">${robot}</span></div>
+                    <div><span class="font-bold text-slate-500">Entry File:</span> <span class="font-mono text-slate-600">${entryFile}</span></div>
+                </div>
+            </td>
+
+            <!-- Mail Sent To Column -->
+            <td>
+                ${job.is_mailsent ? getMaskedEmail(job.mailsent_text) : `<span class="text-xs text-slate-400 italic">No notification</span>`}
+            </td>
+
+            <!-- Acknowledgement Column -->
+            <td>
+                ${getAcknowledgementBadge(job.mailrecived_text, job.is_mailsent,job.status)}
+            </td>
+
+            <!-- STARTED Column -->
+            <td class="text-xs font-mono text-slate-700 align-top pt-3">${formatDate(job.CreatedAt)}</td>
+
+            <!-- ENDED Column -->
+            <td class="text-xs font-mono text-slate-700 align-top pt-3">${formatDate(job.UpdatedAt)}</td>
+
+            <!-- DURATION Column -->
+            <td class="text-center align-top pt-3">
+                ${calculateDuration(job.CreatedAt, job.UpdatedAt)}
+            </td>
+
+            <!-- 
+                UPDATED Actions Column: 
+                Changed text-right to text-center to align button with header properly
+            -->
+            <td class="text-center align-top pt-3">
+                <button onclick="toggleLogs('${job._id}')" class="text-xs font-medium bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors shadow-sm">
+                    ${isExpanded ? "Close Logs" : "View Workflow"}
+                </button>
+            </td>
+        </tr>
+
+        <tr id="log-row-${job._id}" class="${isExpanded ? "" : "hidden"} bg-slate-50/50">
+            <td colspan="10">
+                <div id="log-container-${job._id}" class="p-4 pl-14">
+                    ${isExpanded ? `<div class="text-indigo-600 text-xs animate-pulse font-medium">Fetching logs from server...</div>` : ""}
+                </div>
+            </td>
+        </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+
+    expandedRows.forEach(fetchLogs);
+}
+
+function toggleLogs(id) {
+    if (expandedRows.has(id)) {
+        expandedRows.delete(id);
+    } else {
+        expandedRows.add(id);
+    }
+    fetchJobs(); 
+}
+
+async function fetchLogs(jobId) {
+    const container = document.getElementById(`log-container-${jobId}`);
+    if (!container) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/auditlogs/job/${jobId}`);
+        const logs = await response.json();
+
+        if (!logs.length) {
+            container.innerHTML = `<div class="p-2 text-slate-400 text-xs italic bg-white rounded-lg border border-slate-200">No logs recorded for this execution.</div>`;
+            return;
+        }
+
+        let logHtml = `
+            <div class="bg-white rounded-xl border border-slate-200 shadow-lg shadow-slate-100 p-2 max-h-80 overflow-y-auto custom-scroll">
+                <table class="text-xs w-full text-left">
+                    <thead class="text-slate-500 sticky top-0 bg-white border-b border-slate-200">
+                        <tr>
+                            <th class="px-3 py-2 w-24">Time</th>
+                            <th class="px-3 py-2 w-24">Actor</th>
+                            <th class="px-3 py-2 w-20">Type</th>
+                            <th class="px-3 py-2">Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        logs.forEach(log => {
+            const time = new Date(log.timestamp).toLocaleTimeString("en-US");
+            let rowClass = "";
+            let messageStyle = "";
+
+            if (log.jobType.toLowerCase() === 'error') {
+                rowClass = "bg-rose-50/50";
+                messageStyle = "text-rose-700 font-medium";
+            } else if (log.jobType.toLowerCase() === 'success') {
+                rowClass = "bg-emerald-50/50";
+                messageStyle = "text-emerald-700 font-medium";
+            }
+            
+            logHtml += `
+                <tr class="border-b border-slate-100 hover:bg-slate-100/70 ${rowClass}">
+                    <td class="px-3 py-1.5 font-mono text-slate-600">${time}</td>
+                    <td class="px-3 py-1.5 text-indigo-600 font-medium">${log.actor}</td>
+                    <td class="px-3 py-1.5 text-xs text-slate-500">${log.jobType}</td>
+                    <td class="px-3 py-1.5 ${messageStyle}">${log.message}</td>
+                </tr>
+            `;
+        });
+
+        logHtml += "</tbody></table></div>";
+        container.innerHTML = logHtml;
+
+    } catch (e) {
+        container.innerHTML = `<div class="p-2 text-rose-500 text-xs bg-white rounded-lg border border-rose-200">Error loading logs: Could not reach log service.</div>`;
+    }
+}
+
+fetchJobs();
+setInterval(fetchJobs, 3000);
+
+</script>
+
+</body>
+</html>

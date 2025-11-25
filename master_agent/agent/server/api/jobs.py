@@ -40,14 +40,24 @@ async def get_logs_by_execution_id(execution_id: str) -> dict:
     # }
     
     
-def update_job(job_id: str, update_data: dict) -> dict:
-    # response = requests.put(f"http://localhost:8000/jobs/{job_id}", json=update_data)
-    # response.raise_for_status()
-    # return response.json()
-    updated_job = {"job_id": job_id}
-    updated_job.update(update_data)
-    return updated_job
 
+async def update_job(job_id: str, update_data: dict) -> dict:
+    """
+    PUT request to update an existing job
+    """
+    url = f"http://localhost:8001/jobs/{job_id}"
+    response = requests.put(url, json=update_data)
+    response.raise_for_status()
+    return response.json()
+
+async def action_job(jobid:str) -> dict:
+    """
+    PUT request to update an existing job
+    """
+    url = f"http://localhost:8001/restart/{jobid}"
+    response = requests.post(url)
+    response.raise_for_status()
+    return response.json()
     
 def send_email(recipient: str, subject: str, body: str) -> bool:
     # Simulate sending email
@@ -57,19 +67,36 @@ def send_email(recipient: str, subject: str, body: str) -> bool:
     return True
 
 def get_rca_by_id(rca_id: str) -> dict:
-    # response = requests.get(f"http://localhost:8000/rca/{rca_id}")
-    # response.raise_for_status()
-    # return response.json()
+    response = requests.get(f"http://localhost:8001/rca/{rca_id}")
+    response.raise_for_status()
+    return response.json()
+
+async def get_rca_list() -> list[dict]:
+    response = requests.get(f"http://localhost:8001/rca")
+    response.raise_for_status()
+    return response.json()
     
-    return {
-        "rca_id": rca_id,
-        "analysis": "Root cause analysis details for the given RCA ID.",
-        "recommended_actions": [
-            "Action 1",
-            "Action 2",
-            "Action 3"
-        ]
-    }
+    # return {
+    #     "rca_id": rca_id,
+    #     "analysis": "Root cause analysis details for the given RCA ID.",
+    #     "recommended_actions": [
+    #         "Action 1",
+    #         "Action 2",
+    #         "Action 3"
+    #     ]
+    # }
+    
+async def update_rca(rca_id: str, rca_update: dict) -> dict:
+    """
+    PUT request to update an existing rca
+    """
+    url = f"http://localhost:8001/rca/{rca_id}"
+    response = requests.put(url, json=rca_update)
+    response.raise_for_status()
+    return response.json()
+    
+    
+
 async def get_execution_by_executionid(execution_id:str):
     url=f"http://localhost:8001/executions/{execution_id}"
     response = requests.get(url)
@@ -77,9 +104,44 @@ async def get_execution_by_executionid(execution_id:str):
     return response.json()
 
 
-async def create_audit_logs(audits: list[dict] ):
-    print(audits.__str__)
-    url = "http://localhost:8001/auditlogs"  # your FastAPI endpoint
-    response = requests.post(url, json={"audits":audits.__str__})
+async def create_audit_logs(audits: list[dict]):
+    """
+    Sends audit logs to FastAPI /auditlogs endpoint.
+    """
+    url = "http://localhost:8001/auditlogs"
+
+    # POST JSON body format expected by your FastAPI endpoint:
+    # {
+    #     "audits": [ {...}, {...} ]
+    # }
+    payload = {"audits": audits}
+
+    print("Sending audit logs:", payload)
+
+    response = requests.post(url, json=payload)
     response.raise_for_status()
+
     return response.json()
+
+
+async def send_audit_log(jobType: str, jobId: str, actor: str, message: str) -> dict:
+    """
+    Sends a single audit log entry to FastAPI /auditlog endpoint.
+    """
+    payload = {
+        "jobType": jobType,
+        "jobId": jobId,
+        "actor": actor,
+        "message": message
+    }
+
+    try:
+        response = requests.post(
+            "http://127.0.0.1:8001/auditlog",
+            json=payload
+        )
+        response.raise_for_status()
+        return {"status": "success", "payload": payload, "response": response.json()}
+
+    except Exception as e:
+        return {"status": "error", "error": str(e), "payload": payload}

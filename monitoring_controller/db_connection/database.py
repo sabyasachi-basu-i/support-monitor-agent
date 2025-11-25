@@ -1,5 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient
-
+from datetime import datetime,timezone
+import asyncio
 MONGO_URI = "mongodb://localhost:27017"
 DATABASE_NAME = "automation_logs_db"
 
@@ -17,3 +18,26 @@ async def ensure_collections():
             await db.create_collection(col)
         else:
             print(f"✔ Collection '{col}' already exists.")
+
+
+async def watch_jobs_changes():
+    while True:
+        try:
+            collection = db.jobs
+            audit_collection = db.auditlogs
+            async with collection.watch() as change_stream:
+                async for change in change_stream:
+                    log_entry = {
+                        "timestamp": datetime.now(timezone.utc),
+                        "operation_type": change.get("operationType"),
+                        "document_key": change.get("documentKey"),
+                        "full_document": change.get("fullDocument"),
+                        "update_description": change.get("updateDescription"),
+                    }
+                    await audit_collection.insert_one(log_entry)
+                    print("✅ Logged change:", log_entry)
+        except Exception as e:
+            print("⚠ Error in watch_jobs_changes:", e)
+            await asyncio.sleep(5)  # Retry after 5 seconds
+            
+            

@@ -16,6 +16,7 @@ async def process_faulted_executions():
 
             # Check if job already exists for this ExecutionId
             job_doc = await db.jobs.find_one({"ExecutionId": exec_id})
+            isNew = False
             if job_doc:
                 job_id = job_doc["_id"]
                 print(f"🔹 Job already exists for ExecutionId {exec_id}, JobId: {job_id}")
@@ -24,7 +25,7 @@ async def process_faulted_executions():
                 job_data = Job(
                         ExecutionId=exec_id,
                         JobType="RetryFaulted",
-                        Status="Pending",
+                        status="Started",
                         is_mailsent=False,
                         mailrecived_text= "",
                         mailsent_text = ""
@@ -32,9 +33,15 @@ async def process_faulted_executions():
                 result = await db.jobs.insert_one(job_data.model_dump())
                 job_id = result.inserted_id
                 print(f"✅ Created new job for ExecutionId {exec_id}, JobId: {job_id}")
+                isNew=True
 
-            # Send POST request with job_id
-            await send_job_api(job_id)
+            if job_doc["status"] != "Completed":
+                if job_doc["mailrecived_text"] or isNew or not job_doc["RCA_ID"] or not job_doc["is_mailsent"] : 
+                    await send_job_api(job_id)
+            else :
+                 print(f"mailrecived_text not found !!!!!!!!!!!!!!!!!!!!!")
+
+             
 
     except Exception as e:
         print("⚠ Error processing faulted executions:", e)
