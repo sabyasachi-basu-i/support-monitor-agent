@@ -1,36 +1,36 @@
-Bot Monitoring AI Agent
+# Bot Monitoring AI Agent – Technical Overview
 
-An intelligent system that monitors bot executions in real-time, detects failures, performs AI-driven Root Cause Analysis (RCA), restarts processes when possible, and communicates with developers via email.
+An intelligent monitoring system that observes bot executions in real-time, detects failures, performs AI-driven Root Cause Analysis (RCA), restarts processes when possible, and communicates with developers via email.
 
-🚀 Features
+🚀 Key Features
 
 Real-time WebSocket monitoring of bot executions
 
-Automatic log ingestion & database storage (MongoDB)
+Automatic log ingestion and MongoDB storage
 
 AI-powered RCA using LLM (Groq Llama3)
 
-Auto-restart of failed executions (self-healing)
+Auto-restart of failed jobs (self-healing)
 
-Email-based developer communication loop (SMTP/IMAP)
+Email-based developer feedback loop (SMTP/IMAP)
 
-Live Monitoring Dashboard (HTML UI)
+Live monitoring dashboard (HTML UI)
 
-Transparent audit logs & job tracking
+Complete audit logging and traceability
 
-📁 Project Structure (High Level)
-master_agent/          # AI Brain: LLM, MCP Tools, RCA logic
-monitoring_controller/ # System Body: WebSocket, DB, Email, Scheduler, UI
+📁 High-Level Project Structure
+master_agent/              # AI Brain – LLM, MCP Tools, RCA logic
+monitoring_controller/     # System Engine – WebSocket, DB, Email, Scheduler, UI
 │── utils/
 │── scheduler/
 │── api/
-│── view.html
+│── view.html              # Live dashboard
 
-⚙️ Configuration
+⚙️ Configuration (.env File)
 
-Create a .env file in the root directory:
+Create a .env file in the project root:
 
-# WebSocket Service
+# WebSocket
 WS_URL=wss://us01governor.futuredge.com/api/myhub
 
 # AI / LLM
@@ -54,30 +54,67 @@ IMAP_PORT=993
 IMAP_USER=your_bot_email@gmail.com
 IMAP_PASSWORD=your_app_specific_password
 
-🧵 Internal Ports
+
+# Local Setup Guide – Bot Monitoring AI Agent
+🐍 Python Version Requirement
+
+This project is tested and verified on:
+
+Python 3.11+
+
+
+To check your Python version:
+---
+  ``python --version``
+
+🧪 1. Create & Activate Virtual Environment
+Windows
+---
+ ``python -m venv venv``
+
+``venv\Scripts\activate``
+
+
+📦 2. Install Project Dependencies
+--
+Run this inside the activated virtual environment:
+
+ ``pip install -r requirements.txt``
+
+🔌 3. Internal Component Ports
 Component	Port
 Monitoring Controller API	8001
 Master Agent API	8000
-▶️ How to Run
+--
+▶️ 4. Start the Master Agent (AI Brain)
+Navigate to Master Agent folder:
+--
+``cd master_agent``
 
-Open two terminals:
 
-🧠 Terminal 1 – Master Agent (AI Brain)
-cd master_agent
-uvicorn main:app --reload --port 8000
+Run the service:
 
-🛠 Terminal 2 – Monitoring Controller (System Engine)
-cd monitoring_controller
-uvicorn main:app --reload --port 8001
+``uvicorn main:app --reload --port 8000``
 
-📊 Open Dashboard
+▶️ 5. Start the Monitoring Controller (System Engine)
+Navigate to Monitoring Controller folder:
+--
+``cd monitoring_controller``
 
-Open the UI file directly in your browser:
+Run the service:
 
-monitoring_controller/utils/view.html
+``uvicorn main:app --reload --port 8001``
 
-🔄 System Overview (Simplified Flow)
+📊 6. Open Dashboard (UI)
+--
+Open this file directly in your browser:
+
+``monitoring_controller/utils/view.html``
+
+
+🔄 System Workflow (Simplified Flow)
 flowchart LR
+--
     WS[WebSocket Listener] --> DB[(MongoDB)]
     DB --> FaultMonitor[Fault Monitor (Scheduler)]
     FaultMonitor --> AgentTrigger[(POST /v1/event?jobid)]
@@ -86,40 +123,45 @@ flowchart LR
     Tools --> Restart[Auto Restart]
     Tools --> Email[Send Email to Developer]
     Email --> ReplyMonitor[IMAP Reply Monitor]
-    ReplyMonitor --> AgentResponse[Agent Continues Processing]
+    ReplyMonitor --> AgentResponse[Resume AI Processing]
     DB --> Dashboard[Live UI Dashboard]
 
-💡 Components Overview
-Component	Responsibility
-WebSocket Client	Receives execution + log data
-MongoDB	Stores jobs, logs, executions, audit logs
-Fault Monitor	Detects and triggers AI for faulted jobs
-Master Agent	AI decision-making using Groq LLM
-MCP Tools	RCA, email, restart, audit logging
-SMTP/IMAP	Email sending and response handling
-HTML Dashboard	Visual job tracking & live updates
-📝 Included Collections (MongoDB)
+💡 Component Responsibilities
+Component	Description
+WebSocket Client	Receives bot execution and log data in real-time
+MongoDB	Stores jobs, logs, executions, and audit data
+Fault Monitor	Detects failures and triggers AI
+Master Agent (LLM)	Performs RCA and decision-making
+MCP Tools	Restart actions, email sending, audit logging
+SMTP/IMAP	Sends developer notifications and receives replies
+HTML Dashboard	Displays real-time job status and RCA results
+📝 MongoDB Collections Overview
 Collection	Purpose
-jobs	Tracks job status & email/thread state
+jobs	Job status, timestamps, email thread tracking
 executions	Raw execution metadata
 logs	Detailed process log lines
-rca	Stored Root Cause data
-auditlogs	AI reasoning and actions
-📬 Communication Loop (Email Automation)
+rca	RCA outputs from the AI
+auditlogs	All AI decisions and tool actions
+📬 Email Communication Loop
 Step	Description
-1	AI decides escalation to developer
-2	Sends email with unique threadId
-3	IMAP service captures reply
-4	Finds matching job via threadId
-5	AI resumes processing based on response
+1	AI decides whether developer involvement is needed
+2	Email sent with unique threadId
+3	IMAP worker retrieves replies
+4	Reply mapped to correct job via threadId
+5	AI continues action based on developer input
 📌 Key Benefits
 
-✔ Fully autonomous monitoring
-✔ Intelligent analytics (LLM-based)
-✔ Automated RCA and action execution
-✔ Human-in-loop approval via email
-✔ Transparent & traceable dashboards
+✔ Autonomous fault monitoring
+
+✔ Intelligent LLM-driven analytics
+
+✔ Automated RCA and job recovery
+
+✔ Human-in-loop approval flow
+
+✔ Fully transparent with auditing and dashboards
 
 📄 Licensing & Contribution
 
-Feel free to customize, extend, or integrate with your own automation platforms. Contributions are welcome!
+Feel free to extend, customize, or integrate with your automation systems.
+Contributions and pull requests are welcome.
