@@ -148,21 +148,21 @@ async def get_rca_by_id(rca_id: str):
         raise HTTPException(status_code=404, detail="RCA not found")
     return convert_id(rca)
 
-@app.put("/rca/{rca_id}")
+@app.put("/update_rca/{rca_id}")
 async def update_rca(rca_id: str, rca_update: RCAUpdate):
     """
     Update an existing RCA record by RCA_ID.
     Supports partial updates: only provided fields are updated.
     """
     # Convert RCAUpdate object to dict and remove None values
-    update_data = {k: v for k, v in rca_update.model_dump().items() if v is not None}
+    update_data = {k: v for k, v in rca_update.dict().items() if v is not None}
 
     if not update_data:
         return {"status": "No fields to update"}
 
     # Always update timestamp
     update_data["UpdatedAt"] = datetime.now(timezone.utc)
-
+    
     result = await db.rca.update_one(
         {"RCA_ID": rca_id},
         {"$set": update_data}

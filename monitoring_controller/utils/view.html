@@ -395,7 +395,7 @@ async function fetchLogs(jobId) {
         `;
 
         logs.forEach(log => {
-            const time = new Date(log.timestamp).toLocaleTimeString("en-US");
+            let time = new Date(log.timestamp).toLocaleTimeString("en-US");
             let rowClass = "";
             let messageStyle = "";
 

@@ -1,17 +1,13 @@
-import requests
 import json
 import os  
-import datetime
 from dotenv import load_dotenv  
-import pandas as pd
-import re
 from api.jobs import update_job,get_execution_by_executionid,get_logs_by_execution_id,get_job_by_id,get_rca_list
 from groq import Groq
 load_dotenv()
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-excel_path = r"C:\Users\vishesh\Downloads\RCA_Knowledge_Base.xlsx"
+
 
 
 async def predict_rca_with_llm(execution, logs, rca_list):

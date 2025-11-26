@@ -62,27 +62,25 @@ async def generate_email_content( payload: dict) -> dict:
         }}
         """
 
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    
-    payload = {
-    "model": "openai/gpt-oss-120b",
-    "messages": [{"role": "user", "content": prompt}]
-}
-    
-    response =requests.post(url=GROQ_API_URL,headers=headers,json=payload)
-    
-    print("Status code:", response.status_code)
-    print("Raw response:", response.text)
+    groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    completion = groq_client.chat.completions.create(
+          model=os.getenv("MODEL"),     # or "llama3-70b-8192"
+          messages=[{"role": "user", "content": prompt}],
+          temperature=0.1,
+      )
 
-    # Parse response JSON
-    response_json = response.json()
-    content = response_json["choices"][0]["message"]["content"]
+    result_text = completion.choices[0].message.content.strip()
+
+
+    
+
+    # Parse JSON returned by model
     try:
-       email_json = json.loads(content)
-       return {"subject": email_json["subject"], "body": email_json["body"]}
-    except json.JSONDecodeError:
-      print("Failed to parse LLM output, returning fallback")
-    return {"subject": "No subject", "body": message}
+        
+        email_json = json.loads(result_text)
+        return {"subject": email_json["subject"], "body": email_json["body"]}
+    except Exception as e:
+        print("Failed to parse LLM output, returning fallback")
+        return {"subject": "No subject", "body": message}
+    
+    
