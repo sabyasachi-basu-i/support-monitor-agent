@@ -13,10 +13,4 @@ dotenv
 typing
 langchain
 mcp
-bson
-datetime
 websockets
-json
-os
-smtplib
-email
