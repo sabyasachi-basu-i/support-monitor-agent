@@ -31,7 +31,7 @@ async def send_mail(jobid: str, subject: str,body:str) -> dict:
     Send the mail to developer with exception message and get  the approval response.
     """
 
-    url = f"http://localhost:8001/send_email?subject={subject}&body={body}&job_id={jobid}&email_type={"Developer"}"
+    url = f"http://localhost:8001/send_email?subject={subject}&body={body}&job_id={jobid}&email_type={'Developer'}"
     response = requests.post(url)
     new_job = {
         "status":"Waiting for Reply"
@@ -78,14 +78,14 @@ async def send_mail_to_bussiness_team_and_devloper(
     # Send email to Business Team
     urlBusiness = (
         f"http://localhost:8001/send_email?"
-        f"subject={businessSubject}&body={businessBody}&job_id={jobid}&email_type={"Business"}"
+        f"subject={businessSubject}&body={businessBody}&job_id={jobid}&email_type={'Business'}"
     )
     responseBusiness = requests.post(urlBusiness)
 
     # Send email to Developer for confirmation
     urlDeveloper = (
         f"http://localhost:8001/send_email?"
-        f"subject={developerSubject}&body={developerBody}&job_id={jobid}&email_type={"Developer"}"
+        f"subject={developerSubject}&body={developerBody}&job_id={jobid}&email_type={'Developer'}"
     )
     responseDeveloper = requests.post(urlDeveloper)
 

@@ -1,8 +1,8 @@
-FastAPI
 mcp_use
 fastapi
 langchain_mcp_adapters
 langchain_groq
+groq
 pymongo
 motor
 aiohttp
@@ -13,10 +13,5 @@ dotenv
 typing
 langchain
 mcp
-bson
-datetime
 websockets
-json
-os
-smtplib
-email
+requests
