@@ -90,7 +90,7 @@ async def update_rca(rca_id: str, rca_update: dict) -> dict:
     """
     PUT request to update an existing rca
     """
-    url = f"http://localhost:8001/rca/{rca_id}"
+    url = f"http://localhost:8001/update_rca/{rca_id}"
     response = requests.put(url, json=rca_update)
     response.raise_for_status()
     return response.json()
