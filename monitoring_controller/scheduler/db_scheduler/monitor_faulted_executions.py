@@ -22,22 +22,27 @@ async def process_faulted_executions():
                 print(f"🔹 Job already exists for ExecutionId {exec_id}, JobId: {job_id}")
             else:
                 # Create new job
-                job_data = Job(
-                        ExecutionId=exec_id,
-                        JobType="RetryFaulted",
-                        status="Started",
-                        is_mailsent=False,
-                        mailrecived_text= "",
-                        mailsent_text = ""
-                    )
-                result = await db.jobs.insert_one(job_data.model_dump())
-                job_id = result.inserted_id
-                print(f"✅ Created new job for ExecutionId {exec_id}, JobId: {job_id}")
+                job_doc = {
+                        "ExecutionId":exec_id,
+                        "JobType":"RetryFaulted",
+                        "status":"Not Started",
+                        "is_mailsent":False,
+                        "mailrecived_text": "",
+                        "mailsent_text" : ""
+                }
                 isNew=True
 
-            if job_doc["status"] != "Completed":
+            if job_doc["status"] not in ["Completed", "Started"]:
+                if isNew:
+                    job_doc["status"] = "Started"
+                    job_data = Job(**job_doc)  
+                    result = await db.jobs.insert_one(job_data.model_dump())
+                    job_id = result.inserted_id
+                    print(f"✅ Created new job for ExecutionId {exec_id}, JobId: {job_id}")
+                    
                 if job_doc["mailrecived_text"] or isNew or not job_doc["RCA_ID"] or not job_doc["is_mailsent"] : 
-                    await send_job_api(job_id)
+                    # await send_job_api(job_id)
+                    asyncio.create_task(send_job_api(job_id))
             else :
                  print(f"mailrecived_text not found !!!!!!!!!!!!!!!!!!!!!")
 
