@@ -82,9 +82,14 @@ Run this inside the activated virtual environment:
  ``pip install -r requirements.txt``
 
 🔌 3. Internal Component Ports
-Component	Port
+Component	Port Master Agent API	8000 
 Monitoring Controller API	8001
-Master Agent API	8000
+--
+⚠️ Mandatory Startup Order
+--
+Before running the system, the Master Agent must always be started first.
+The Monitoring Controller depends on the Master Agent’s API for RCA, decisions, and MCP tool actions.
+
 --
 ▶️ 4. Start the Master Agent (AI Brain)
 Navigate to Master Agent folder:
