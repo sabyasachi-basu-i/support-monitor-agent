@@ -37,48 +37,30 @@ async def process_faulted_executions():
                 job_id = job_doc["_id"]
                 logger.info(f"🔹 Existing job found | ExecutionId={exec_id}, JobId={job_id}")
             else:
-                # Create new job structure
-                logger.info(f"🆕 No job found for ExecutionId={exec_id}, creating new job...")
+                # Create new job
                 job_doc = {
-                    "ExecutionId": exec_id,
-                    "JobType": "RetryFaulted",
-                    "status": "Not Started",
-                    "is_mailsent": False,
-                    "is_running": False,
-                    "mailrecived_text": "",
-                    "mailsent_text": "",
-                    "CreatedAt": datetime.now(timezone.utc)
+                        "ExecutionId":exec_id,
+                        "JobType":"RetryFaulted",
+                        "status":"Not Started",
+                        "is_mailsent":False,
+                        "mailrecived_text": "",
+                        "mailsent_text" : ""
                 }
-                isNew = True
+                isNew=True
 
-            if job_doc["is_running"]:
-                logger.info(
-                    f"⏸ Job is currently running | ExecutionId={exec_id} | Skipping further processing."
-                )
-                continue
-            # Check job state before processing further
-            if job_doc["status"] in ["Completed", "Started"]:
-                logger.info(
-                    f"⏭ Skipping ExecutionId={exec_id} | Job status='{job_doc['status']}'"
-                )
-                continue
-
-            # Create job if new
-            if isNew:
-                logger.info(f"📝 Creating job in DB for ExecutionId={exec_id}...")
-                job_doc["status"] = "Started"
-                job_data = Job(**job_doc)
-                result = await db.jobs.insert_one(job_data.model_dump())
-                job_id = result.inserted_id
-                logger.info(f"✅ New job created | JobId={job_id}")
-
-            # Decide whether to send API call
-            should_send = (
-                job_doc.get("mailrecived_text")
-                or isNew
-                # or not job_doc.get("RCA_ID")
-                or not job_doc.get("is_mailsent")
-            )
+            if job_doc["status"] not in ["Completed", "Started"]:
+                if isNew:
+                    job_doc["status"] = "Started"
+                    job_data = Job(**job_doc)  
+                    result = await db.jobs.insert_one(job_data.model_dump())
+                    job_id = result.inserted_id
+                    print(f"✅ Created new job for ExecutionId {exec_id}, JobId: {job_id}")
+                    
+                if job_doc["mailrecived_text"] or isNew or not job_doc["RCA_ID"] or not job_doc["is_mailsent"] : 
+                    # await send_job_api(job_id)
+                    asyncio.create_task(send_job_api(job_id))
+            else :
+                 print(f"mailrecived_text not found !!!!!!!!!!!!!!!!!!!!!")
 
             if should_send:
                 logger.info(f"📨 Triggering API call for JobId={job_id}...")
