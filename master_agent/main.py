@@ -1,7 +1,7 @@
 # main.py
 from fastapi import FastAPI
 from agent.client.client import setup_agent
-from agent.server.api.jobs import get_job_by_id, get_logs_by_execution_id,get_execution_by_executionid ,get_rca_by_id
+from agent.server.api.jobs import get_job_by_id, get_logs_by_execution_id,get_execution_by_executionid ,get_rca_by_id,update_job
 app = FastAPI()
 
 @app.post("/v1/event")
@@ -16,8 +16,16 @@ async def read_root(jobid: str):
     LOGS: {logs}
     EXCECUTION: {execution}
     """
+    new_job = {
+        "is_running": True
+    }
+    await update_job(jobid,new_job)
     print(message)
     response = await setup_agent(message,job["_id"])
+    new_job = {
+        "is_running": False,
+    }
+    await update_job(jobid,new_job)
     return response
 
 

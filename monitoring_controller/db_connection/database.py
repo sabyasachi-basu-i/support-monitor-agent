@@ -3,6 +3,7 @@ from datetime import datetime,timezone
 import asyncio
 
 MONGO_URI = "mongodb://10.0.0.239:27017"
+# MONGO_URI = "mongodb://localhost:27017"
 DATABASE_NAME = "automation_logs_db"
 
 client = AsyncIOMotorClient(MONGO_URI)

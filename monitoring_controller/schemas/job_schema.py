@@ -7,6 +7,7 @@ class Job(BaseModel):
     RCA_ID: Optional[str] = None
     threadId: Optional[str] = None
     is_mailsent: bool = False
+    is_running: bool = False
     mailsent_text: Optional[str] = None
     mailrecived_text: Optional[str] = None
     status: Optional[str] = None
@@ -20,6 +21,8 @@ class JobUpdate(BaseModel):
     RCA_ID: Optional[str] = None
     threadId: Optional[str] = None
     is_mailsent: Optional[bool] = None
+    is_running: Optional[bool] = None
     mailsent_text: Optional[str] = None
     mailrecived_text: Optional[str] = None
     status: Optional[str] = None
+    
