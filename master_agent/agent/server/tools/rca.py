@@ -26,7 +26,15 @@ You will be given:
 
 Your job:
 - Compare the execution + log details with the RCA records.
-- Pick the *best matching* RCA by similarity (exception message, type, process).
+- Pick the *best matching* RCA by should be based on fields such as: (exception message, type, process name).
+-If NO RCA record has strong similarity, return null.
+
+STRICT RULES:
+- DO NOT fabricate or guess RCA_IDs.
+- DO NOT modify any RCA record.
+- ONLY choose an RCA_ID that exists in the provided list.
+- If similarity is low or uncertain → return null.
+- Your output MUST be ONLY valid JSON (no explanation, no text outside JSON).
 - Output ONLY a JSON object (no explanation) with:
     {{
        "RCA_ID": "<best RCA_ID>",
@@ -48,6 +56,7 @@ If there is no exact match, return null
 
 ### LATEST LOG ENTRY:
 {logs}
+
 
 Return JSON only.
     """
