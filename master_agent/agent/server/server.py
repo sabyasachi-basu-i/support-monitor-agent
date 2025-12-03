@@ -97,19 +97,43 @@ async def send_mail_to_bussiness_team_and_devloper(
 
     return {"message": "Emails sent successfully and job updated."}
 # ---- Audit Logging Tool ----
+# @mcp.tool()
+# async def perform_action(jobid:str,ExecutionId:str,mailrecived_text:str,event: str, data: dict) -> dict:
+#     """
+#     Log event for traceability.
+#     """
+    
+#     print(f"[AUDIT] {event} :: {data}")
+#     new_job = {
+#         "status":"Completed"
+#     }
+#     # if mailrecived_text:
+#     await action_job(jobid)
+#     await update_job(jobid,new_job)
+#     return {"status": "logged"}
+
+
 @mcp.tool()
-async def perform_action(jobid:str,ExecutionId:str,mailrecived_text:str,event: str, data: dict) -> dict:
+async def perform_action(jobid:str, ExecutionId:str, mailrecived_text:str, event: str, data: dict) -> dict:
     """
-    Log event for traceability.
+    Log event for traceability and perform action ONLY if allowed.
     """
     
+    allow_action = data.get("allow_action_execution", False)
     print(f"[AUDIT] {event} :: {data}")
-    new_job = {
-        "status":"Completed"
-    }
-    if mailrecived_text:
+
+    if allow_action:
+        # Only execute action if SOP allows it
         await action_job(jobid)
-        await update_job(jobid,new_job)
+        new_job = {"status":"Completed"}
+        await update_job(jobid, new_job)
+        print(f"[ACTION EXECUTED] Job {jobid}")
+    # else:
+    #     # Only log, do not perform action
+    #     print(f"[ACTION SKIPPED] Job {jobid} - Not allowed by SOP")
+    #     new_job = {"status": "Pending"}  # Or keep current status
+    #     await update_job(jobid, new_job)
+
     return {"status": "logged"}
 
 @mcp.tool()
